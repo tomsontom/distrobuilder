@@ -53,7 +53,10 @@ distro-build
 	   classname="at.bestsolution.releng.distrobuilder.ant.DistroBuilderTaskDef" />
 
   <target name="build-dist">
-    <builder>
+    <builder
+      builddirectory="/tmp/jbuild"
+      ...
+    >
       <updatesite ...>
 
       <p2repository ...>
