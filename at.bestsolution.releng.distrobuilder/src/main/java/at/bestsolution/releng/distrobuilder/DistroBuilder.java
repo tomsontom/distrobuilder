@@ -437,7 +437,7 @@ public class DistroBuilder {
 	}
 
 	public void addInstallUnit(InstallUnit unit) {
-		this.addInstallUnit(unit);
+		this.iuList.add(unit);
 	}
 	
 	public void addP2Repository(P2Repository repo) {
