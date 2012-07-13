@@ -1,1 +1,95 @@
 Utility to generate custom Eclipse Distros
+
+1. About
+
+This is a set of utility class who allow you easily create your own Eclipse Distribution
+from a base SDK
+
+2. Usage
+
+To prepare the distro building you should download a base product like the SDK which
+you use as the source platform to build your distro. The preferred one is probably the
+Eclipse SDK from http://download.eclipse.org/eclipse/downloads/.
+
+Create a directory structure similar to this somewhere on your filesystem
+
+distro-build
+  + targets - base products you want used as the base of your distro
+    + 3.7.2
+      + linux-gtk
+        + x86
+          eclipse-SDK-3.7.2-linux-gtk.tar.gz
+        + x86_64
+          ...
+      + macosx-cocoa
+        + x86_64
+          ....
+      + win32
+        + x86
+          ....
+        + x86_64
+          ....
+     + $VERSION$
+        + $OS-$WS$
+          + $ARCH$
+
+  + repos - holds static p2 repos to improve speed
+    + 3.7.2
+      GEF-Update-3.7.2.zip
+      ...
+    + $VERSION$
+      ...
+    + shared
+      tmf-xtext-Update-2.3.0.zip
+      ...
+  + builder
+    "Eclipse Install for your OS"
+
+2.1 Ant
+
+<project>
+  <taskdef name="builder" 
+	   classpath="/path/to/jar/at.bestsolution.releng.distrobuilder-0.0.1-SNAPSHOT.jar"
+	   classname="at.bestsolution.releng.distrobuilder.ant.DistroBuilderTaskDef" />
+
+  <target name="build-dist">
+    <builder>
+      <updatesite ...>
+
+      <p2repository ...>
+
+      <installunit ...>
+    </builder>
+  </target>
+</project> 
+
+2.2 Java
+
+public class MyExporter {
+
+ // ...
+ DistroBuilder b = new DistroBuilder();
+ b.setBuildDirectory("/tmp/jbuild");
+ b.setTargetDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/targets");
+ b.setP2DirectorExecutable("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/builder/eclipse");
+ b.setStaticReposDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos");
+ b.setDistDirectory("/tmp/jbuild/dist");
+ b.setVersion("0.0.14");
+
+ // Add update sites to consult
+ b.addUpdateSite(new UpdateSite("http://cbes.javaforge.com/update", null, "win32", null));
+ // ...
+ 
+ // Add dynamic repos
+ b.addP2Repository(new P2Repository("http://www.efxclipse.org/p2-repos/releases/at.bestsolution.efxclipse.tooling.updatesite-0.0.14.zip", null, null, null));
+ // ...
+
+ // Add units to install
+ b.addInstallUnit(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
+ // ...
+
+ b.buildDistros();
+ 
+ // ...
+
+}
