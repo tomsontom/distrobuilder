@@ -437,7 +437,7 @@ public class DistroBuilder {
 	}
 
 	public void addInstallUnit(InstallUnit unit) {
-		this.iuList.add(unit);
+		this.addInstallUnit(unit);
 	}
 	
 	public void addP2Repository(P2Repository repo) {
@@ -448,37 +448,53 @@ public class DistroBuilder {
 		this.siteList.add(site);
 	}
 	
+	public String getDistDirectory() {
+		return distDirectory;
+	}
+
+	public void setDistDirectory(String distDirectory) {
+		this.distDirectory = distDirectory;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		DistroBuilder b = new DistroBuilder();
-		b.buildDirectory = "/tmp/jbuild";
-		b.targetDirectory = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/targets";
-		b.p2DirectorExecutable = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/builder/eclipse";
-		b.staticReposDirectory = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos";
-		b.distDirectory = "/tmp/jbuild/dist";
-		b.version = "0.0.14";
+		b.setBuildDirectory("/tmp/jbuild");
+		b.setTargetDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/targets");
+		b.setP2DirectorExecutable("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/builder/eclipse");
+		b.setStaticReposDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos");
+		b.setDistDirectory("/tmp/jbuild/dist");
+		b.setVersion("0.0.14");
 		
-		b.siteList.add(new UpdateSite("http://cbes.javaforge.com/update", null, "win32", null));
+		b.addUpdateSite(new UpdateSite("http://cbes.javaforge.com/update", null, "win32", null));
 		
-		b.repoList.add(new P2Repository("http://www.efxclipse.org/p2-repos/releases/at.bestsolution.efxclipse.tooling.updatesite-0.0.14.zip", null, null, null));
+		b.addP2Repository(new P2Repository("http://www.efxclipse.org/p2-repos/releases/at.bestsolution.efxclipse.tooling.updatesite-0.0.14.zip", null, null, null));
 		
-		b.iuList.add(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
-		b.iuList.add(new InstallUnit("org.eclipse.xtext.sdk.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.eclipse.emf.mwe2.runtime.sdk.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("at.bestsolution.efxclipse.tooling.feature.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("at.bestsolution.efxclipse.runtime.e3.feature.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.eclipse.wst.xml_ui.feature.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.eclipse.egit.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.tigris.subversion.clientadapter.feature.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.tigris.subversion.subclipse.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.tigris.subversion.clientadapter.svnkit.feature.feature.group", null, null, null));
-		b.iuList.add(new InstallUnit("org.eclipse.e4.core.tools.feature.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.eclipse.xtext.sdk.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.eclipse.emf.mwe2.runtime.sdk.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("at.bestsolution.efxclipse.tooling.feature.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("at.bestsolution.efxclipse.runtime.e3.feature.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.eclipse.wst.xml_ui.feature.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.eclipse.egit.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.feature.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.tigris.subversion.subclipse.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.svnkit.feature.feature.group", null, null, null));
+		b.addInstallUnit(new InstallUnit("org.eclipse.e4.core.tools.feature.feature.group", null, null, null));
 		
-		b.iuList.add(new InstallUnit("org.tigris.subversion.clientadapter.javahl.feature.feature.group", null, "win32", "x86"));
-		b.iuList.add(new InstallUnit("mercurialeclipse.feature.group", null, "win32", null));
-		b.iuList.add(new InstallUnit("com.intland.hgbinary.win32.feature.group", null, "win32", null));
+		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.javahl.feature.feature.group", null, "win32", "x86"));
+		b.addInstallUnit(new InstallUnit("mercurialeclipse.feature.group", null, "win32", null));
+		b.addInstallUnit(new InstallUnit("com.intland.hgbinary.win32.feature.group", null, "win32", null));
 		
 		b.buildDistros();
 		

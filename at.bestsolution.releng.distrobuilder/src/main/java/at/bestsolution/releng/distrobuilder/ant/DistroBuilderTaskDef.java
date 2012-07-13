@@ -60,6 +60,22 @@ public class DistroBuilderTaskDef extends org.apache.tools.ant.Task {
 		builder.setBuildDirectory(buildDirectory);
 	}
 	
+	public String getDistDirectory() {
+		return builder.getDistDirectory();
+	}
+
+	public void setDistDirectory(String distDirectory) {
+		builder.setDistDirectory(distDirectory);
+	}
+
+	public String getVersion() {
+		return getVersion();
+	}
+
+	public void setVersion(String version) {
+		builder.setVersion(version);
+	}
+	
 	@Override
 	public void execute() throws BuildException {
 		builder.buildDistros();
