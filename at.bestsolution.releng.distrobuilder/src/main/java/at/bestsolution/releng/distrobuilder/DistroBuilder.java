@@ -16,24 +16,28 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
+import org.apache.tools.tar.TarOutputStream;
 
 public class DistroBuilder {
 	private String targetDirectory;
 	private String p2DirectorExecutable;
-	private String reposDirectory;
+	private String staticReposDirectory;
 	private String buildDirectory;
+	private String distDirectory;
+	private String version;
 
 	private List<InstallUnit> iuList = new ArrayList<InstallUnit>();
 	private List<UpdateSite> siteList = new ArrayList<UpdateSite>();
-	private List<P2Repository> repositories = new ArrayList<P2Repository>();
+	private List<P2Repository> repoList = new ArrayList<P2Repository>();
 
 	static class PipeThread extends Thread {
 		private final InputStream in;
@@ -60,18 +64,14 @@ public class DistroBuilder {
 		}
 	}
 	
-	public DistroBuilder() {
-
-	}
-
 	private void buildDistro(File targetSdksDir, String version, String os, String arch) {
 		System.out.println("Build distro for " + version + " - " + os + " - " + arch);
 		List<String> iuList = filterList(this.iuList, version, os, arch);
 		List<String> repos = filterList(this.siteList, version, os, arch);
-		repos.addAll(makeLocalRepos(new File(buildDirectory,"cache"), filterList(this.repositories, version, os, arch)));
+		repos.addAll(makeLocalRepos(new File(buildDirectory,"cache"), filterList(this.repoList, version, os, arch)));
 
-		collectZipFiles(repos, reposDirectory, "shared", os, arch);
-		collectZipFiles(repos, reposDirectory, version, os, arch);
+		collectZipFiles(repos, staticReposDirectory, "shared", os, arch);
+		collectZipFiles(repos, staticReposDirectory, version, os, arch);
 
 		String exec = p2DirectorExecutable + " -nosplash -application org.eclipse.equinox.p2.director -consoleLog -profileProperties org.eclipse.update.install.features=true -profile SDKProfile ";
 		exec += " -installIU " + join(iuList,",");
@@ -92,7 +92,14 @@ public class DistroBuilder {
 					stdThread.start();
 					PipeThread errThread = new PipeThread(p.getErrorStream(), System.err);
 					errThread.start();
-					System.out.println("====================> " + p.waitFor());
+					if( p.waitFor() == 0 ) {
+						File distDir = new File(distDirectory);
+						distDir.mkdirs();
+						File out = new File(distDir, constructFilename(targetSdk.getName(),"efx",this.version));
+						compress(rootDir, out);
+					} else {
+						System.err.println("Export failed");
+					}
 					stdThread.join();
 					errThread.join();
 				} catch (IOException e) {
@@ -105,6 +112,78 @@ public class DistroBuilder {
 				
 			}
 		}
+	}
+	
+	private static void compress(File sourceDir, File targetFile) throws IOException {
+		List<String> fileList = new ArrayList<String>();
+		collectFiles(fileList, sourceDir,"");
+		
+		if( targetFile.getName().endsWith(".zip") ) {
+			targetFile.getParentFile().mkdirs();
+			ZipOutputStream out = new ZipOutputStream(new FileOutputStream(targetFile));
+			
+			for( String f : fileList ) {
+				ZipEntry e = new ZipEntry(f);
+				out.putNextEntry(e);
+				
+				FileInputStream in = new FileInputStream(new File(sourceDir, f));
+				byte[] buf = new byte[1024];
+				int l;
+				
+				while( (l = in.read(buf)) != -1 ) {
+					out.write(buf, 0, l);
+				}
+				in.close();
+				out.closeEntry();
+			}
+			
+			out.close();
+		} else {
+			targetFile.getParentFile().mkdirs();
+			TarOutputStream out = new TarOutputStream(new GZIPOutputStream(new FileOutputStream(targetFile)));
+			out.setLongFileMode(TarOutputStream.LONGFILE_GNU);
+			
+			for( String f : fileList ) {
+				TarEntry e = new TarEntry(f);
+				File tarFile = new File(sourceDir, f);
+				e.setSize(tarFile.length());
+				out.putNextEntry(e);
+				
+				FileInputStream in = new FileInputStream(tarFile);
+				byte[] buf = new byte[1024];
+				int l;
+				
+				while( (l = in.read(buf)) != -1 ) {
+					out.write(buf, 0, l);
+				}
+				in.close();
+				out.closeEntry();
+			}
+			
+			out.close();			
+		}
+	}
+	
+	private static void collectFiles(List<String> files, File dir, String prefix) {
+		for( String f : dir.list() ) {
+			File fd = new File(dir, f);
+			if( fd.isDirectory() ) {
+				collectFiles(files, fd, prefix.isEmpty() ? f : prefix+"/"+f);
+			} else {
+				files.add(prefix.isEmpty() ? f : prefix + "/" +f);
+			}
+		}
+	}
+	
+	private static String constructFilename(String sourceName, String appDefinition, String version) {
+		String suffix;
+		if( sourceName.endsWith(".zip") ) {
+			suffix = ".zip";
+		} else {
+			suffix = ".tar.gz";
+		}
+		
+		return sourceName.substring(0,sourceName.length()-suffix.length()) + "-" + appDefinition + "-" + version + suffix;
 	}
 	
 	private static List<String> makeLocalRepos(File cacheDirectory, List<String> repositories) {
@@ -323,6 +402,52 @@ public class DistroBuilder {
 		}
 	}
 	
+	
+	
+	public String getTargetDirectory() {
+		return targetDirectory;
+	}
+
+	public void setTargetDirectory(String targetDirectory) {
+		this.targetDirectory = targetDirectory;
+	}
+
+	public String getP2DirectorExecutable() {
+		return p2DirectorExecutable;
+	}
+
+	public void setP2DirectorExecutable(String p2DirectorExecutable) {
+		this.p2DirectorExecutable = p2DirectorExecutable;
+	}
+
+	public String getStaticReposDirectory() {
+		return staticReposDirectory;
+	}
+
+	public void setStaticReposDirectory(String reposDirectory) {
+		this.staticReposDirectory = reposDirectory;
+	}
+
+	public String getBuildDirectory() {
+		return buildDirectory;
+	}
+
+	public void setBuildDirectory(String buildDirectory) {
+		this.buildDirectory = buildDirectory;
+	}
+
+	public void addInstallUnit(InstallUnit unit) {
+		this.iuList.add(unit);
+	}
+	
+	public void addP2Repository(P2Repository repo) {
+		this.repoList.add(repo);
+	}
+	
+	public void addUpdateSite(UpdateSite site) {
+		this.siteList.add(site);
+	}
+	
 	/**
 	 * @param args
 	 */
@@ -331,11 +456,13 @@ public class DistroBuilder {
 		b.buildDirectory = "/tmp/jbuild";
 		b.targetDirectory = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/targets";
 		b.p2DirectorExecutable = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/builder/eclipse";
-		b.reposDirectory = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos";
+		b.staticReposDirectory = "/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos";
+		b.distDirectory = "/tmp/jbuild/dist";
+		b.version = "0.0.14";
 		
 		b.siteList.add(new UpdateSite("http://cbes.javaforge.com/update", null, "win32", null));
 		
-		b.repositories.add(new P2Repository("http://eos.bestsolution.at:8080/job/e(fx)clipse/4/at.bestsolution.efxclipse$at.bestsolution.efxclipse.tooling.updatesite/artifact/at.bestsolution.efxclipse/at.bestsolution.efxclipse.tooling.updatesite/0.1.0-SNAPSHOT/at.bestsolution.efxclipse.tooling.updatesite-0.1.0-SNAPSHOT-assembly.zip", null, null, null));
+		b.repoList.add(new P2Repository("http://www.efxclipse.org/p2-repos/releases/at.bestsolution.efxclipse.tooling.updatesite-0.0.14.zip", null, null, null));
 		
 		b.iuList.add(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
 		b.iuList.add(new InstallUnit("org.eclipse.xtext.sdk.feature.group", null, null, null));
@@ -354,12 +481,9 @@ public class DistroBuilder {
 		b.iuList.add(new InstallUnit("com.intland.hgbinary.win32.feature.group", null, "win32", null));
 		
 		b.buildDistros();
+		
 //		try {
-//			downloadFile(new URL("http://eos.bestsolution.at:8080/job/e(fx)clipse/4/at.bestsolution.efxclipse$at.bestsolution.efxclipse.tooling.updatesite/artifact/at.bestsolution.efxclipse/at.bestsolution.efxclipse.tooling.updatesite/0.1.0-SNAPSHOT/at.bestsolution.efxclipse.tooling.updatesite-0.1.0-SNAPSHOT-assembly.zip"), new File("/tmp/jbuild/cache"));
-//			
-//		} catch (MalformedURLException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
+//			compress(new File("/tmp/jbuild/tmp"), new File("/tmp/jbuild/dist/out.tar.gz"));
 //		} catch (IOException e) {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
