@@ -23,6 +23,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.tools.ant.taskdefs.condition.Os;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
 import org.apache.tools.tar.TarOutputStream;
@@ -125,7 +126,7 @@ public class DistroBuilder {
 	
 	private static void compress(File sourceDir, File targetFile) throws IOException {
 		List<String> fileList = new ArrayList<String>();
-		collectFiles(fileList, sourceDir,"");
+		collectFiles(fileList, sourceDir,sourceDir.getName());
 		
 		if( targetFile.getName().endsWith(".zip") ) {
 			targetFile.getParentFile().mkdirs();
