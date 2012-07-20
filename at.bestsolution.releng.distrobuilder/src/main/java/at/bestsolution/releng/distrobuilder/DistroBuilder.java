@@ -126,14 +126,14 @@ public class DistroBuilder {
 	
 	private static void compress(File sourceDir, File targetFile) throws IOException {
 		List<String> fileList = new ArrayList<String>();
-		collectFiles(fileList, sourceDir,sourceDir.getName());
+		collectFiles(fileList, sourceDir,"");
 		
 		if( targetFile.getName().endsWith(".zip") ) {
 			targetFile.getParentFile().mkdirs();
 			ZipOutputStream out = new ZipOutputStream(new FileOutputStream(targetFile));
 			
 			for( String f : fileList ) {
-				ZipEntry e = new ZipEntry(f);
+				ZipEntry e = new ZipEntry(sourceDir.getName() + "/" + f);
 				out.putNextEntry(e);
 				
 				FileInputStream in = new FileInputStream(new File(sourceDir, f));
@@ -154,7 +154,7 @@ public class DistroBuilder {
 			out.setLongFileMode(TarOutputStream.LONGFILE_GNU);
 			
 			for( String f : fileList ) {
-				TarEntry e = new TarEntry(f);
+				TarEntry e = new TarEntry(sourceDir.getName() + "/" + f);
 				File tarFile = new File(sourceDir, f);
 				if( tarFile.canExecute() ) {
 					e.setMode(0755);
