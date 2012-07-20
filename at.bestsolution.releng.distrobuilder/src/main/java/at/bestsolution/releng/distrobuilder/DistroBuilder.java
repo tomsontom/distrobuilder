@@ -26,6 +26,7 @@ import java.util.zip.ZipOutputStream;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
 import org.apache.tools.tar.TarOutputStream;
+import org.apache.tools.zip.UnixStat;
 
 public class DistroBuilder {
 	private String targetDirectory;
@@ -39,6 +40,14 @@ public class DistroBuilder {
 	private List<UpdateSite> siteList = new ArrayList<UpdateSite>();
 	private List<P2Repository> repoList = new ArrayList<P2Repository>();
 
+	private static final int READ  = 1 << 2;
+	private static final int WRITE = 1 << 1;
+	private static final int EXEC  = 1;
+	
+	private static final int OWNER_EXEC = 00100;
+	private static final int GROUP_EXEC = 00010;
+	private static final int OTHER_EXEC = 00001;
+	
 	static class PipeThread extends Thread {
 		private final InputStream in;
 		private final PrintStream out;
@@ -146,6 +155,9 @@ public class DistroBuilder {
 			for( String f : fileList ) {
 				TarEntry e = new TarEntry(f);
 				File tarFile = new File(sourceDir, f);
+				if( tarFile.canExecute() ) {
+					e.setMode(0755);
+				}
 				e.setSize(tarFile.length());
 				out.putNextEntry(e);
 				
@@ -285,7 +297,18 @@ public class DistroBuilder {
 							targetDir = f;
 						}
 					} else {
-						in.copyEntryContents(new FileOutputStream(new File(targetDirectory,e.getName())));
+						File f = new File(targetDirectory,e.getName());
+						in.copyEntryContents(new FileOutputStream(f));
+						
+						int m = e.getMode();
+						if( (m & OWNER_EXEC) == OWNER_EXEC 
+								|| (m & GROUP_EXEC) == GROUP_EXEC 
+								|| (m & OTHER_EXEC) == OTHER_EXEC ) {
+							f.setExecutable(true, false);
+						} else if( e.getLinkName() != null && e.getLinkName().trim().length() > 0 ) {
+							//TODO Handle symlinks
+//							System.err.println("A LINK: " + e.getLinkName());
+						}
 					}
 				}
 				in.close();
@@ -468,35 +491,57 @@ public class DistroBuilder {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		DistroBuilder b = new DistroBuilder();
-		b.setBuildDirectory("/tmp/jbuild");
-		b.setTargetDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/targets");
-		b.setP2DirectorExecutable("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/builder/eclipse");
-		b.setStaticReposDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos");
-		b.setDistDirectory("/tmp/jbuild/dist");
-		b.setVersion("0.0.14");
+//		DistroBuilder b = new DistroBuilder();
+//		b.setBuildDirectory("/tmp/jbuild");
+//		b.setTargetDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/targets");
+//		b.setP2DirectorExecutable("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/builder/eclipse");
+//		b.setStaticReposDirectory("/Users/tomschindl/Desktop/efxclipse-all-in-one/jbuild/repos");
+//		b.setDistDirectory("/tmp/jbuild/dist");
+//		b.setVersion("0.0.14");
+//		
+//		b.addUpdateSite(new UpdateSite("http://cbes.javaforge.com/update", null, "win32", null));
+//		
+//		b.addP2Repository(new P2Repository("http://www.efxclipse.org/p2-repos/releases/at.bestsolution.efxclipse.tooling.updatesite-0.0.14.zip", null, null, null));
+//		
+//		b.addInstallUnit(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.eclipse.xtext.sdk.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.eclipse.emf.mwe2.runtime.sdk.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("at.bestsolution.efxclipse.tooling.feature.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("at.bestsolution.efxclipse.runtime.e3.feature.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.eclipse.wst.xml_ui.feature.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.eclipse.egit.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.feature.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.tigris.subversion.subclipse.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.svnkit.feature.feature.group", null, null, null));
+//		b.addInstallUnit(new InstallUnit("org.eclipse.e4.core.tools.feature.feature.group", null, null, null));
+//		
+//		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.javahl.feature.feature.group", null, "win32", "x86"));
+//		b.addInstallUnit(new InstallUnit("mercurialeclipse.feature.group", null, "win32", null));
+//		b.addInstallUnit(new InstallUnit("com.intland.hgbinary.win32.feature.group", null, "win32", null));
+//		
+//		b.buildDistros();
 		
-		b.addUpdateSite(new UpdateSite("http://cbes.javaforge.com/update", null, "win32", null));
+//		uncompress(new File("/Users/tomschindl/Desktop/efxclipse-all-in-one/e4/targetplatforms/eclipse-SDK-4.2RC2-macosx-cocoa-x86_64.tar.gz"), new File("/tmp/bla"));
+//		try {
+//			compress(new File("/tmp/bla"), new File("/tmp/bla.tar.gz"));
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		
 		
-		b.addP2Repository(new P2Repository("http://www.efxclipse.org/p2-repos/releases/at.bestsolution.efxclipse.tooling.updatesite-0.0.14.zip", null, null, null));
+//		int read  = 1 << 2; // 4
+//		int write = 1 << 1; // 2
+//		int exec  = 1;      // 1
+//		
+//		int owner = read | write | exec;
+//		int group = read | exec;
+//		int other = read | exec;
+//		
+//		int a = Integer.parseInt("0"+owner+group+other, 8);
+//		System.err.println((a & Integer.parseInt("00020", 8)) == Integer.parseInt("00020", 8));
+//		
 		
-		b.addInstallUnit(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.eclipse.xtext.sdk.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.eclipse.emf.mwe2.runtime.sdk.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("at.bestsolution.efxclipse.tooling.feature.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("at.bestsolution.efxclipse.runtime.e3.feature.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.eclipse.wst.xml_ui.feature.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.eclipse.egit.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.feature.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.tigris.subversion.subclipse.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.svnkit.feature.feature.group", null, null, null));
-		b.addInstallUnit(new InstallUnit("org.eclipse.e4.core.tools.feature.feature.group", null, null, null));
-		
-		b.addInstallUnit(new InstallUnit("org.tigris.subversion.clientadapter.javahl.feature.feature.group", null, "win32", "x86"));
-		b.addInstallUnit(new InstallUnit("mercurialeclipse.feature.group", null, "win32", null));
-		b.addInstallUnit(new InstallUnit("com.intland.hgbinary.win32.feature.group", null, "win32", null));
-		
-		b.buildDistros();
 		
 //		try {
 //			compress(new File("/tmp/jbuild/tmp"), new File("/tmp/jbuild/dist/out.tar.gz"));
