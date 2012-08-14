@@ -9,6 +9,7 @@ import at.bestsolution.releng.distrobuilder.UpdateSite;
 
 public class DistroBuilderTaskDef extends org.apache.tools.ant.Task {
 	private DistroBuilder builder = new DistroBuilder();
+	private String appname = "distro";
 	
 	public InstallUnit createInstallUnit() {
 		InstallUnit u = new InstallUnit();
@@ -76,9 +77,17 @@ public class DistroBuilderTaskDef extends org.apache.tools.ant.Task {
 		builder.setVersion(version);
 	}
 	
+	public String getAppname() {
+		return appname;
+	}
+	
+	public void setAppname(String appname) {
+		this.appname = appname;
+	}
+	
 	@Override
 	public void execute() throws BuildException {
-		builder.buildDistros();
+		builder.buildDistros(appname);
 //		System.err.println("HELLO WORLD!!!!");
 	}
 }

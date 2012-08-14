@@ -74,7 +74,7 @@ public class DistroBuilder {
 		}
 	}
 	
-	private void buildDistro(File targetSdksDir, String version, String os, String arch) {
+	private void buildDistro(File targetSdksDir, String name, String version, String os, String arch) {
 		System.out.println("Build distro for " + version + " - " + os + " - " + arch);
 		List<String> iuList = filterList(this.iuList, version, os, arch);
 		List<String> repos = filterList(this.siteList, version, os, arch);
@@ -105,7 +105,7 @@ public class DistroBuilder {
 					if( p.waitFor() == 0 ) {
 						File distDir = new File(distDirectory);
 						distDir.mkdirs();
-						File out = new File(distDir, constructFilename(targetSdk.getName(),"efx",this.version));
+						File out = new File(distDir, constructFilename(targetSdk.getName(),name,this.version));
 						compress(rootDir, out);
 					} else {
 						System.err.println("Export failed");
@@ -409,7 +409,7 @@ public class DistroBuilder {
 		return "jar:file:" + f.getParentFile().getAbsolutePath() + "/" + f.getName() + "!/";
 	}
 	
-	public void buildDistros() {
+	public void buildDistros(String appname) {
 		File f = new File(targetDirectory);
 		for (File versionDir : f.listFiles()) {
 			if (versionDir.isDirectory()) {
@@ -417,7 +417,7 @@ public class DistroBuilder {
 					if (osDir.isDirectory()) {
 						for (File archDir : osDir.listFiles()) {
 							if (archDir.isDirectory()) {
-								buildDistro(archDir, versionDir.getName(), osDir.getName(), archDir.getName());
+								buildDistro(archDir, appname, versionDir.getName(), osDir.getName(), archDir.getName());
 							}
 						}
 					}
