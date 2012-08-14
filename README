@@ -91,7 +91,7 @@ public class MyExporter {
  b.addInstallUnit(new InstallUnit("org.eclipse.emf.sdk.feature.group,", null, null, null));
  // ...
 
- b.buildDistros();
+ b.buildDistros("efx");
  
  // ...
 
