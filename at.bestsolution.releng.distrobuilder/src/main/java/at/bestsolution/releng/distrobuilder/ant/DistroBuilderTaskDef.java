@@ -70,7 +70,7 @@ public class DistroBuilderTaskDef extends org.apache.tools.ant.Task {
 	}
 
 	public String getVersion() {
-		return getVersion();
+		return builder.getVersion();
 	}
 
 	public void setVersion(String version) {
