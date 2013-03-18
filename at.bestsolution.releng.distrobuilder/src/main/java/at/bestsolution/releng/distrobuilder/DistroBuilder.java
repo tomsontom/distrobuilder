@@ -83,7 +83,7 @@ public class DistroBuilder {
 		collectZipFiles(repos, staticReposDirectory, "shared", os, arch);
 		collectZipFiles(repos, staticReposDirectory, version, os, arch);
 
-		String exec = p2DirectorExecutable + " -nosplash -application org.eclipse.equinox.p2.director -consoleLog -profileProperties org.eclipse.update.install.features=true -profile SDKProfile ";
+		String exec = p2DirectorExecutable + " -vm "+System.getProperty("java.home")+" -nosplash -application org.eclipse.equinox.p2.director -consoleLog -profileProperties org.eclipse.update.install.features=true -profile SDKProfile ";
 		exec += " -installIU " + join(iuList,",");
 		exec += " -repository " + join(repos,",") + " ";
 		
@@ -95,6 +95,10 @@ public class DistroBuilder {
 				}
 				
 				File rootDir = uncompress(targetSdk, f);
+				if( rootDir == null ) {
+					continue;
+				}
+				
 				String commandString = exec + " -destination " + rootDir.getAbsolutePath();
 				try {
 					Process p = Runtime.getRuntime().exec(commandString);
@@ -299,6 +303,9 @@ public class DistroBuilder {
 						}
 					} else {
 						File f = new File(targetDirectory,e.getName());
+						if( ! f.getParentFile().exists() ) {
+							f.getParentFile().mkdirs();
+						}
 						in.copyEntryContents(new FileOutputStream(f));
 						
 						int m = e.getMode();
@@ -313,6 +320,10 @@ public class DistroBuilder {
 					}
 				}
 				in.close();
+				
+				if( targetDir == null ) {
+					targetDir = new File(targetDirectory,"eclipse");
+				}
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -332,7 +343,11 @@ public class DistroBuilder {
 							targetDir = f;
 						}
 					} else {
-						FileOutputStream out = new FileOutputStream(new File(targetDirectory,e.getName()));
+						File f = new File(targetDirectory,e.getName());
+						if( ! f.getParentFile().exists() ) {
+							f.getParentFile().mkdirs();
+						}
+						FileOutputStream out = new FileOutputStream(f);
 						byte[] buf = new byte[1024];
 						int l;
 						while( (l = in.read(buf, 0, 1024)) != -1 ) {
@@ -343,6 +358,10 @@ public class DistroBuilder {
 					in.closeEntry();
 				}
 				in.close();
+				
+				if( targetDir == null ) {
+					targetDir = new File(targetDirectory,"eclipse");
+				}
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
