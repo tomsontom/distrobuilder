@@ -87,7 +87,10 @@ public class DistroBuilderTaskDef extends org.apache.tools.ant.Task {
 	
 	@Override
 	public void execute() throws BuildException {
-		builder.buildDistros(appname);
-//		System.err.println("HELLO WORLD!!!!");
+		try {
+			builder.buildDistros(appname);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
