@@ -83,7 +83,7 @@ public class DistroBuilder {
 		collectZipFiles(repos, staticReposDirectory, "shared", os, arch);
 		collectZipFiles(repos, staticReposDirectory, version, os, arch);
 
-		String exec = p2DirectorExecutable + " -vm "+System.getProperty("java.home")+" -nosplash -application org.eclipse.equinox.p2.director -consoleLog -profileProperties org.eclipse.update.install.features=true -profile SDKProfile ";
+		String exec = p2DirectorExecutable + " -vm "+System.getProperty("java.home")+"/bin/java"+" -nosplash -application org.eclipse.equinox.p2.director -consoleLog -profileProperties org.eclipse.update.install.features=true -profile SDKProfile ";
 		exec += " -installIU " + join(iuList,",");
 		exec += " -repository " + join(repos,",") + " ";
 		
